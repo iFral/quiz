@@ -1,4 +1,4 @@
-module github.com/iFral/gophercises/quiz
+module github.com/iFral/quiz
 
 go 1.19
 
