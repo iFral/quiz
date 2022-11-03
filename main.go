@@ -5,34 +5,53 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
 
+type question struct {
+	q string
+	a string
+}
+
 func main() {
 	//Declare flags
-	var qFile string
-	flag.StringVar(&qFile, "f", "problems.csv", "The quiz file to be used.")
+	qFile := flag.String("f", "problems.csv", "The quiz file to be used.")
+	flag.Parse()
 
 	//Read csv
-	log.Infoln("@@@  Reading file", qFile, "  @@@")
-	file, err := os.Open(qFile)
+	log.Infoln("@@@  Reading file", *qFile, "  @@@")
+	file, err := os.Open(*qFile)
 	if err != nil {
 		log.Errorln("!!!  Error opening quiz file  !!!")
 		log.Debugln(err)
+		os.Exit(1)
 	}
 	reader := csv.NewReader(file)
-	questions, _ := reader.ReadAll()
+	lines, err := reader.ReadAll()
+	if err != nil {
+		log.Errorln("!!!  Error reading csv file  !!!")
+		log.Debugln(err)
+		os.Exit(1)
+	}
+	questions := make([]question, len(lines))
+	for i, line := range lines {
+		questions[i] = question{
+			q: line[0],
+			a: strings.TrimSpace(line[1]),
+		}
+	}
 
 	//Ask questions and get answers
 	log.Infoln("@@@  Asking", len(questions), "question(s)  @@@")
 	var index int = 1
 	var results = make(map[int]bool)
-	for _, q := range questions {
-		fmt.Print(index, ". ", q[0], " = ")
+	for _, i := range questions {
+		fmt.Print(index, ". ", i.q, " = ")
 		var ans string
-		fmt.Scanln(&ans)
-		results[index] = q[1] == ans
+		fmt.Scanf("%s\n", &ans)
+		results[index] = i.a == ans
 		index++
 	}
 	log.Infoln("@@@  Quiz completed. Tabulating score.  @@@")
